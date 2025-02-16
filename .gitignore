@@ -1,0 +1,8 @@
+# Ignore pics folder
+pics/
+
+# Ignore pycache folder
+__pycache__/
+
+# Ignore MNIST folder
+MNIST/
