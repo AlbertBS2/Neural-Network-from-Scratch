@@ -73,7 +73,7 @@ def forward_pass(net_input, all_weights, all_biases, activation="ReLU"):
         net_input (array): Input to the network
         all_weights (list): Weight matrices for each layer
         all_biases (list): Bias vectors for each layer
-        activation (str): Activation function to use, ReLU or sigmoid
+        activation (str): Activation function to use ("ReLU" or "sigmoid")
     
     Returns:
         net_output (array): Output of the network
@@ -211,7 +211,7 @@ def backward_pass(K, all_weights, all_biases, all_f, all_h, y):
 
 def update_parameters(all_weights, all_biases, all_dl_dweights, all_dl_dbiases, learning_rate, optimizer=None):
     """
-    Updates the weights and biases using gradient descent, momentum or Adam
+    Updates the weights and biases using standard gradient descent, momentum or Adam
     
     Args:
         all_weights (list): Current weight matrices
@@ -283,8 +283,8 @@ def predict(net_input, y, all_weights, all_biases):
     Uses the trained network to predict classes for input data
     
     Args:
-        net_input (array): Input data of shape (D_i, I)
-        y (array): True labels of shape (C, I)
+        net_input (array): Input data
+        y (array): True labels
         all_weights (list): Weight matrices
         all_biases (list): Bias vectors
         
@@ -319,8 +319,8 @@ def random_mini_batches(net_input, y, batch_size=64):
     Generates random mini-batches from the input data
     
     Args:
-        net_input (array): Input data of shape (D, I)
-        y (array): Labels of shape (C, I)
+        net_input (array): Input data
+        y (array): True labels
         batch_size (int): Size of each mini-batch
         
     Returns:
@@ -367,14 +367,14 @@ def train_model(X_train, Y_train, model, activation, optimizer=None, iterations=
         X_train (array): Training data
         Y_train (array): Training labels (one-hot encoded)
         model (list): Architecture defined as a list [K, D]
-        activation (str): Activation function to use, ReLU or sigmoid
+        activation (str): Activation function to use ("ReLU" or "sigmoid")
         optimizer (str): Optimizer to use (None, "momentum" or "Adam")
         iterations (int): Number of epochs
         learning_rate (float): Learning rate
         batch_size (int): Mini-batch size
         X_test (array): Test data (optional)
         Y_test (array): Test labels (one-hot encoded) (optional)
-        print_every (int): Frequency (in epochs) to print cost and accuracy (optional)
+        print_every (int): Frequency (in iterations) to print cost and accuracy
     
     Returns:
         all_weights (list): Trained weight matrices
