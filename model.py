@@ -1,4 +1,6 @@
 import numpy as np
+from time import perf_counter
+from tqdm.auto import tqdm
 
 
 def initialize(K, D, D_i, D_o):
@@ -358,7 +360,7 @@ def random_mini_batches(net_input, y, batch_size=64):
     return batches
 
 
-def train_model(X_train, Y_train, model, activation, optimizer=None, iterations=1000,
+def train_model(X_train, Y_train, model, activation, optimizer=None, epochs=100,
                 learning_rate=0.01, batch_size=64, X_test=None, Y_test=None, print_every=None):
     """
     Trains the neural network model
@@ -369,12 +371,12 @@ def train_model(X_train, Y_train, model, activation, optimizer=None, iterations=
         model (list): Architecture defined as a list [K, D]
         activation (str): Activation function to use ("ReLU" or "sigmoid")
         optimizer (str): Optimizer to use (None, "momentum" or "Adam")
-        iterations (int): Number of epochs
+        epochs (int): Number of epochs
         learning_rate (float): Learning rate
         batch_size (int): Mini-batch size
         X_test (array): Test data (optional)
         Y_test (array): Test labels (one-hot encoded) (optional)
-        print_every (int): Frequency (in iterations) to print cost and accuracy
+        print_every (int): Frequency (in epochs) to print cost and accuracy
     
     Returns:
         all_weights (list): Trained weight matrices
@@ -383,7 +385,9 @@ def train_model(X_train, Y_train, model, activation, optimizer=None, iterations=
         test_costs (list): Test costs
         train_accuracies (list): Training accuracies
         test_accuracies (list): Test accuracies
+        time_taken (datetime.timedelta): Time taken to train the model
     """
+    init_time = perf_counter()
     K, D = model
     D_i, D_o = X_train.shape[1], Y_train.shape[1]
 
@@ -395,7 +399,10 @@ def train_model(X_train, Y_train, model, activation, optimizer=None, iterations=
     train_accuracies = []
     test_accuracies = []
     
-    for i in range(iterations):
+    for epoch in tqdm(range(1, epochs+1)):
+        batch_cost = []
+        batch_acc = []
+
         mini_batches = random_mini_batches(X_train, Y_train, batch_size)
 
         for X_batch, Y_batch in mini_batches:
@@ -407,25 +414,33 @@ def train_model(X_train, Y_train, model, activation, optimizer=None, iterations=
 
             # Update parameters
             all_weights, all_biases = update_parameters(all_weights, all_biases, all_dl_dweights, all_dl_dbiases, learning_rate, optimizer)
-        
-        # Compute cost and accuracy on training set
-        _, train_acc, train_cost = predict(X_train, Y_train, all_weights, all_biases)
-        train_costs.append(train_cost)
-        train_accuracies.append(train_acc)
 
-        # Compute cost and accuracy on test set
+            # Compute batch's cost and accuracy on training set
+            _, train_acc, train_cost = predict(X_batch, Y_batch, all_weights, all_biases)
+            batch_cost.append(train_cost)
+            batch_acc.append(train_acc)
+        
+        # Compute epoch's cost and accuracy on training set
+        train_costs.append(np.mean(batch_cost))
+        train_accuracies.append(np.mean(batch_acc))
+
+        # Compute epoch's cost and accuracy on test set
         if X_test is not None and Y_test is not None:
             _, test_acc, test_cost = predict(X_test, Y_test, all_weights, all_biases)
             test_costs.append(test_cost)
             test_accuracies.append(test_acc)
 
         if print_every:
-            # Print cost and accuracy every few iterations
-            if i % print_every == 0 or i == iterations - 1:
+            # Print cost and accuracy every few epochs
+            if epoch % print_every == 0 or epoch == epochs - 1:
                 if X_test is not None and Y_test is not None:
                     # Print cost and accuracy
-                    print(f"Iter {i}: Train Cost={train_cost:.4f}, Test Cost={test_cost:.4f}, Train Acc={train_acc:.4f}, Test Acc={test_acc:.4f}")
+                    print(f"Epoch: {epoch} | Train Loss: {train_costs[epoch-1]:.2f} | Train Acc: {train_accuracies[epoch-1]:.2f} | Test Loss: {test_cost:.2f} | Test Acc: {test_acc:.2f}")
                 else:
-                    print(f"Iter {i}: Train Cost={train_cost:.4f}, Train Acc={train_acc:.4f}")
+                    print(f"Epoch: {epoch} | Train Loss: {train_costs[epoch-1]:.2f} | Train Acc: {train_accuracies[epoch-1]:.2f}")
+
+    # Print time taken
+    time_taken = perf_counter() - init_time
+    print(f"Time taken: {time_taken}")
     
-    return all_weights, all_biases, train_costs, test_costs, train_accuracies, test_accuracies
+    return all_weights, all_biases, train_costs, test_costs, train_accuracies, test_accuracies, time_taken
